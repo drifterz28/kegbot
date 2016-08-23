@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
-    <title>test</title>
+    <title>KegBot</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
     <link rel='stylesheet' href='main.css' type='text/css'/>
 </head>
 
 <body>
   <div class="wrapper">
-    <section class="keg">
+    <section class="kegWrapper">
       <h1 class="brewName js-nameChange">Kombucha</h1>
-      <div class="kegGraph">
-        <div class="keg js-kegs">
-          <div class="progress"></div>
+      <div class="kegGraph js-kegs">
+        <div class="keg">
+          100%
         </div>
+        <div class="progress"></div>
       </div>
     </section>
     <section class="temp js-temp">38</section>
-    <section class="keg">
+    <section class="kegWrapper">
       <h1 class="brewName js-nameChange">Some Sick IPA</h1>
-      <div class="kegGraph">
-        <div class="keg js-kegs">
-          <div class="progress"></div>
+      <div class="kegGraph js-kegs">
+        <div class="keg">
+          100%
         </div>
+        <div class="progress"></div>
       </div>
     </section>
   </div>
@@ -35,6 +37,10 @@
   </div>
   <div id="output"></div>
   <script src="main.js"></script>
+  <script>
+  var XFoo = document.registerElement('keg-image');
+  document.body.appendChild(new XFoo());
+  </script>
 </body>
 
 </html>

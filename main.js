@@ -81,7 +81,10 @@ function pourMeAColdOne(e) {
 	}
 	kegFillLevel[kegNum] = kegFillLevel[kegNum] - ozInPint;
 	newPercent = precentOfMax(kegFillLevel[kegNum], fullKegOz);
-	kegs[kegNum].querySelector('.progress').style.transform = 'translateY(' + (100 - newPercent) + '%)';
+
+	kegs[kegNum].querySelector('.progress').style.transform = 'translateY(-' + newPercent + '%)';
+	kegs[kegNum].querySelector('.keg').textContent = newPercent.toPrecision(2) + '%';
+
 }
 
 function newKeg(e) {
@@ -94,7 +97,8 @@ function newKeg(e) {
 	}
 	kegFillLevel[kegNum] = fullKegOz;
 	newPercent = precentOfMax(kegFillLevel[kegNum], fullKegOz);
-	kegs[kegNum].querySelector('.progress').style.transform = 'translateY(' + (100 - newPercent) + '%)';
+	kegs[kegNum].querySelector('.progress').style.transform = 'translateY(-' + newPercent + '%)';
+	kegs[kegNum].querySelector('.keg').textContent = newPercent + '%';
 
 }
 

@@ -11,6 +11,7 @@ body {
   color: #fff;
   height: 100%;
   font-family: Arial, sans-serif;
+  margin: 0;
 }
 .wrapper {
   display: flex;
@@ -19,16 +20,17 @@ body {
   height: 100%;
   border: 1px solid;
 }
-.keg {
+.kegWrapper {
   width: 50%;
   margin-top: 20px;
 }
-.keg:first-child {
+.kegWrapper:first-child {
   border-right: 1px solid;
 }
-.keg .brewName {
+.kegWrapper .brewName {
   text-align: center;
   font-size: 30px;
+  margin: 10px;
 }
 .temp {
   position: absolute;
@@ -47,19 +49,28 @@ body {
   content: "°";
 }
 .kegGraph {
-  margin: 20px;
-}
-.kegGraph .keg {
-  height: 150px;
-  width: 50px;
-  border: 1px solid;
-  margin: 0 auto;
-  position: relative;
+  margin: 10px;
+  height: 200px;
   overflow: hidden;
 }
+.kegGraph .keg {
+  height: 200px;
+  width: 90px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  line-height: 1.5;
+  text-align: center;
+  background: url(keg.svg) center center no-repeat;
+}
 .kegGraph .progress {
-  background: green;
+  background: #ffa500;
   height: 100%;
+  width: 68px;
+  bottom: 16px;
+  height: 156px;
+  margin: 0 auto;
+  position: relative;
   transition: all .2s ease;
-  transform: translateY(0%);
+  transform: translateY(-100%);
 }
