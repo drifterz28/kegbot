@@ -1,0 +1,65 @@
+html {
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+body {
+  background: #272727;
+  color: #fff;
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+.wrapper {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  height: 100%;
+  border: 1px solid;
+}
+.keg {
+  width: 50%;
+  margin-top: 20px;
+}
+.keg:first-child {
+  border-right: 1px solid;
+}
+.keg .brewName {
+  text-align: center;
+  font-size: 30px;
+}
+.temp {
+  position: absolute;
+  margin: 0 auto;
+  background: #272727;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 70px;
+  padding: 10px 0 10px 10px;
+  border: 1px solid;
+  text-align: center;
+  font-size: 30px;
+}
+.temp::after {
+  content: "°";
+}
+.kegGraph {
+  margin: 20px;
+}
+.kegGraph .keg {
+  height: 150px;
+  width: 50px;
+  border: 1px solid;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+.kegGraph .progress {
+  background: green;
+  height: 100%;
+  transition: all .2s ease;
+  transform: translateY(0%);
+}
