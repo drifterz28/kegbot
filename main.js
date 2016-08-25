@@ -1,6 +1,8 @@
 let kegs = document.querySelectorAll('.js-kegs');
 let kegNames = document.querySelectorAll('.js-nameChnage');
 let tempReading = document.querySelector('.js-temp');
+let pages = document.querySelectorAll('.js-pages');
+
 const wsUri = "ws://echo.websocket.org/";
 const output = document.getElementById("output");
 
@@ -11,10 +13,16 @@ const kegSize = 5; //in gallons
 const oZinGallon = 128;
 const ozInPint = 16;
 const fullKegOz = kegSize * oZinGallon;
+
 let kegFillLevel = [fullKegOz, fullKegOz];
 
-function init() {
+let winWidth = window.innerWidth;
+let winHeight = window.innerHeight;
 
+function init() {
+	for (var i = 0; i < pages.length; i++) {
+		pages[i].style.height = winHeight + 'px';
+	}
 	//setInterval(getFakeData, 500);
 	//testWebSocket();
 }
@@ -102,7 +110,8 @@ function newKeg(e) {
 
 }
 
-window.addEventListener("load", init);
+init();
+
 btnsKegs[0].addEventListener('click', newKeg);
 btnsKegs[1].addEventListener('click', newKeg);
 btnsPour[0].addEventListener('click', pourMeAColdOne);

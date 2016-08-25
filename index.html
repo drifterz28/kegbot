@@ -8,39 +8,40 @@
 </head>
 
 <body>
-  <div class="wrapper">
-    <section class="kegWrapper">
-      <h1 class="brewName js-nameChange">Kombucha</h1>
-      <div class="kegGraph js-kegs">
-        <div class="keg">
-          100%
+    <div class="page js-pages" id="home">
+      <div class="wrapper">
+      <section class="kegWrapper">
+        <h1 class="brewName js-nameChange">Kombucha</h1>
+        <div class="kegGraph js-kegs">
+          <div class="keg">
+            100%
+          </div>
+          <div class="progress"></div>
         </div>
-        <div class="progress"></div>
-      </div>
-    </section>
-    <section class="temp js-temp">38</section>
-    <section class="kegWrapper">
-      <h1 class="brewName js-nameChange">Some Sick IPA</h1>
-      <div class="kegGraph js-kegs">
-        <div class="keg">
-          100%
+      </section>
+      <section class="temp js-temp">38</section>
+      <section class="kegWrapper">
+        <h1 class="brewName js-nameChange">Some Sick IPA</h1>
+        <div class="kegGraph js-kegs">
+          <div class="keg">
+            100%
+          </div>
+          <div class="progress"></div>
         </div>
-        <div class="progress"></div>
-      </div>
-    </section>
+      </section>
+    </div>
+    <div class="testData">
+      <button class="btn one js-pour">Give me a pint 1</button>
+      <button class="btn two js-pour">Give me a pint 2</button>
+      <button class="btn one js-newKeg">New Keg 1</button>
+      <button class="btn two js-newKeg">New Keg 2</button>
+    </div>
+    <div id="output"></div>
   </div>
-  <div class="testData">
-    <button class="btn one js-pour">Give me a pint 1</button>
-    <button class="btn two js-pour">Give me a pint 2</button>
-    <button class="btn one js-newKeg">New Keg 1</button>
-    <button class="btn two js-newKeg">New Keg 2</button>
+  <div class="page js-pages" id="settings">
+
   </div>
-  <div id="output"></div>
   <script src="main.js"></script>
-  <script>
-  var XFoo = document.registerElement('keg-image');
-  document.body.appendChild(new XFoo());
-  </script>
 </body>
 
 </html>
