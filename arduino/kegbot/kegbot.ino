@@ -68,8 +68,8 @@ void setup() {
 
   // handle index
   server.on("/", []() {
-    // send index.html
-    server.send(200, "text/html", "<html><head><script>var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);connection.onopen = function () {  connection.send('Connect ' + new Date()); }; connection.onerror = function (error) {    console.log('WebSocket Error ', error);};connection.onmessage = function (e) {  console.log('Server: ', e.data);};function sendRGB() {  var r = parseInt(document.getElementById('r').value).toString(16);  var g = parseInt(document.getElementById('g').value).toString(16);  var b = parseInt(document.getElementById('b').value).toString(16);  if(r.length < 2) { r = '0' + r; }   if(g.length < 2) { g = '0' + g; }   if(b.length < 2) { b = '0' + b; }   var rgb = '#'+r+g+b;    console.log('RGB: ' + rgb); connection.send(rgb); }</script></head><body>LED Control:<br/><br/>R: <input id=\"r\" type=\"range\" min=\"0\" max=\"255\" step=\"1\" onchange=\"sendRGB();\" /><br/>G: <input id=\"g\" type=\"range\" min=\"0\" max=\"255\" step=\"1\" onchange=\"sendRGB();\" /><br/>B: <input id=\"b\" type=\"range\" min=\"0\" max=\"255\" step=\"1\" onchange=\"sendRGB();\" /><br/></body></html>");
+    // send json
+    server.send(200, "application/json", jsonOut());
   });
 
   server.begin();
@@ -89,7 +89,12 @@ double thermistor(int RawADC) {
   return Temp;
 }
 
-String jsonOut(int temp, int kegOne, int kegTwo) {
+String jsonOut() {
+  int val = analogRead(D1);
+  int kegOneVal = analogRead(D2);
+  int kegTwoVal = analogRead(D3);
+  double temp = thermistor(val);
+  
   StaticJsonBuffer<200> jsonBuffer;
 
   JsonObject& root = jsonBuffer.createObject();
@@ -97,18 +102,8 @@ String jsonOut(int temp, int kegOne, int kegTwo) {
   root["kegOne"] = kegOne;
   root["kegTwo"] = kegTwo;
   root.printTo(Serial);
-
-  return "{temp: " + String(temp) + ", kegOne: " + String(kegOne) + ", kegTwo: " + String(kegTwo) + "}";
-}
-
-void otherThing() {
-  int val = analogRead(D1);
-  int kegOneVal = analogRead(D2);
-  int kegTwoVal = analogRead(D3);
-  double temp = thermistor(val);
-  Serial.print(jsonOut(temp, kegOneVal, kegTwoVal));
   Serial.println(hx711.read() / 100.0);
-  delay(500);
+  return "{temp: " + String(temp) + ", kegOne: " + String(kegOne) + ", kegTwo: " + String(kegTwo) + "}";
 }
 
 void loop() {
