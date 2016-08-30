@@ -2,12 +2,6 @@
 #include <math.h>
 #include <ArduinoJson.h>
 #include "FS.h";
-#include <ESP8266WiFi.h>
-
-const char* ssid = "your-ssid";
-const char* password = "your-password";
-
-WiFiServer server(80);
 
 const byte hx711_data_pin = D2;
 const byte hx711_clock_pin = D3;
@@ -17,6 +11,7 @@ Q2HX711 hx711(hx711_data_pin, hx711_clock_pin);
 void setup() {
   Serial.begin(115200);
   delay(10);
+  
 }
 
 double thermistor(int RawADC) {
