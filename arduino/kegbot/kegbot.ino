@@ -1,3 +1,7 @@
+// Use the AVRISP mkII programer
+
+const char* ssid     = "";
+const char* password = "";
 
 #include <Arduino.h>
 
@@ -8,7 +12,6 @@
 #include <ESP8266mDNS.h>
 
 #include "HX711.h"
-#include <ArduinoJson.h>
 
 #include "DHT.h"
 
@@ -18,6 +21,7 @@ ESP8266WebServer server = ESP8266WebServer(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 // set up scales to pins
+float scaleReset = -646.38;
 // scale 1
 const byte hx711_data_pin1 = 5;
 const byte hx711_clock_pin1 = 4;
@@ -29,13 +33,13 @@ const byte hx711_clock_pin2 = 2;
 HX711 hx711_2(hx711_data_pin2, hx711_clock_pin2);
 
 // dht22 temp sensor
-#define DHTPIN 14 
+#define DHTPIN 14
 #define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+
 // setting up non blocking timing for temp update
 unsigned long previousMillis = 0;
-const long interval = 10000; // 10 seconds
-
-DHT dht(DHTPIN, DHTTYPE);
+const long interval = 1000;
 
 float getHumidity() {
   float humidity = dht.readHumidity();
@@ -63,20 +67,10 @@ float getTemp() {
 }
 
 String jsonOut() {
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    
-  }
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  
-  root["temp"] = getTemp();
-  root["humidity"] = getHumidity();
-  root["kegOne"] = hx711_1.get_units(10);
-  root["kegTwo"] = hx711_2.get_units(10);
-  root.printTo(Serial);
-  return "";
+  float temp = getTemp();
+  int kegOne = hx711_1.get_units(10);
+  int kegTwo = hx711_2.get_units(10);
+  return "{'temp': " + String(temp) + ", 'kegOne': " + String(kegOne) + ", 'kegTwo': " + String(kegTwo) + "}";
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
@@ -97,6 +91,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
   }
 }
 
+void pushData() {
+  unsigned long currentMillis = millis();
+  if(currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    webSocket.broadcastTXT("broadcastTXT");
+  }
+}
+
 void handleRoot() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", jsonOut());
@@ -111,7 +113,7 @@ void setup() {
     delay(1000);
   }
 
-  WiFiMulti.addAP("SSID", "passpasspass");
+  WiFiMulti.addAP(ssid, password);
 
   while (WiFiMulti.run() != WL_CONNECTED) {
     delay(100);
@@ -126,17 +128,24 @@ void setup() {
   }
   // keeps from sending ssid for connection
   WiFi.softAP("esp8266-15e", "nothingyoucanfindout", 1, 1);
-  
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
   // handle index
   server.on("/", handleRoot);
+  server.on("/home", []() {
+    // send index.html
+    server.send(200, "text/html", "<html><body><ul id=\"data\"></ul><script>var connection = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);connection.onopen = function() {connection.send('Connect ' + new Date());};connection.onerror = function(error) {console.log('WebSocket Error ', error);};connection.onmessage = function(e) {console.log('Server: ', e.data);showData(e.data);};function showData(data) {data = JSON.parse(data);var dataElm = document.getElementById('data');console.log(dataElm);var list = '';for (var variable in data) {if (data.hasOwnProperty(variable)) {list += '<li>' + variable + ': ' + data[variable];}}dataElm.innerHTML = list;}</script></body></html>");
+  });
+
   server.begin();
   dht.begin(); // start the temp sensor
   // setup scales for oz
-  hx711_1.set_scale(-646.38);
-  hx711_2.set_scale(-646.38);
+  hx711_1.set_scale(scaleReset);
+  hx711_2.set_scale(scaleReset);
   hx711_1.tare();
   hx711_2.tare();
-  
+
   // Add service to MDNS
   MDNS.addService("http", "tcp", 80);
   MDNS.addService("ws", "tcp", 81);
@@ -145,5 +154,5 @@ void setup() {
 void loop() {
   webSocket.loop();
   server.handleClient();
+  pushData();
 }
-

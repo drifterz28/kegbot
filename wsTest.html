@@ -1,0 +1,33 @@
+<html>
+<body>
+  <ul id="data"></ul>
+  <script>
+      var data = '{"temp": 34.4, "kegOne": 234, "kegTwo": 234}';
+      // var connection = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);
+      // connection.onopen = function() {
+      //     connection.send('Connect ' + new Date());
+      // };
+      // connection.onerror = function(error) {
+      //     console.log('WebSocket Error ', error);
+      // };
+      // connection.onmessage = function(e) {
+      //     console.log('Server: ', e.data);
+      //
+      // };
+      function showData(data) {
+        data = JSON.parse(data);
+        var dataElm = document.getElementById('data');
+        console.log(dataElm)
+        var list = '';
+        for (var variable in data) {
+          if (data.hasOwnProperty(variable)) {
+            list += '<li>' + variable + ': ' + data[variable];
+          }
+        }
+        dataElm.innerHTML = list;
+      }
+      console.log(data);
+      showData(data);
+  </script>
+</body>
+</html>
