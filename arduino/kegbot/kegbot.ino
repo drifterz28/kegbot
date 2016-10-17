@@ -1,10 +1,4 @@
-#include <Q2HX711.h>
-
-// Use the AVRISP mkII programer
-
-const char* ssid = "";
-const char* password = "admin";
-
+// ***Use the AVRISP mkII programer***
 #include <ArduinoJson.h>
 #include "FS.h"
 
@@ -16,6 +10,12 @@ const char* password = "admin";
 
 #include "HX711.h"
 #include "DHT.h"
+
+const char* defaultSsid = "KegBot";
+const char* defaultPassword = "admin";
+
+const char* ssid = "";
+const char* password = "";
 
 ESP8266WiFiMulti WiFiMulti;
 
@@ -43,6 +43,49 @@ HX711 hx711_1;
 #define hx711_data_pin2 4
 #define hx711_clock_pin2 5
 HX711 hx711_2;
+
+bool loadConfig() {
+  File configFile = SPIFFS.open("/config.json", "r");
+  if (!configFile) {
+    Serial.println("Failed to open config file");
+    return false;
+  }
+  size_t size = configFile.size();
+  if (size > 1024) {
+    Serial.println("Config file size is too large");
+    return false;
+  }
+  std::unique_ptr<char[]> buf(new char[size]);
+
+  configFile.readBytes(buf.get(), size);
+
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.parseObject(buf.get());
+
+  if (!json.success()) {
+    Serial.println("Failed to parse config file");
+    return false;
+  }
+  defaultAPssid = json["ssid"];
+  defaultAPpassword = json["password"];
+  return true;
+}
+
+bool saveConfig() {
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  json["ssid"] = defaultSsid;
+  json["password"] = defaultPassword;
+
+  File configFile = SPIFFS.open("/config.json", "w");
+  if (!configFile) {
+    Serial.println("Failed to open config file for writing");
+    return false;
+  }
+
+  json.printTo(configFile);
+  return true;
+}
 
 float getHumidity() {
   float humidity = dht.readHumidity();
@@ -104,6 +147,23 @@ void handleRoot() {
   server.send(200, "application/json", jsonOut());
 }
 
+void handleSetup() {
+  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot Setup</title></head><body><form method=\"post\" action=\"/save\" style=\"margin: 0 auto;max-width:500px;width:100%;\"><h3>Wifi setup</h3><table><tr><td><label>SSID:</label></td><td><input name=\"ssid\"/></td></tr><tr><td><label>Password:</label></td><td><input name=\"password\"/></td></tr></table><button>Save</button></form></body></html>");
+}
+
+void handleSave() {
+  // list all options to change and make a check for arg and update arg to file.
+  // return status. 400 if fail and 200 if OK.
+  // example to get args
+  // server.hasArg("argname");
+  // server.arg("argname");
+  server.send(200, "text/html", "some html");
+}
+
+void handleHome() {
+  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"assets/main.css\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"assets/main.js\"></script></body></html>");
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -131,13 +191,11 @@ void setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  // handle index
+  // handle routes
   server.on("/", handleRoot);
-  server.on("/home", []() {
-    //send index.html
-    server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"assets/main.css\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"assets/main.js\"></script></body></html>");
-  });
-
+  server.on("/setup", handleSetup);
+  server.on("/save", handleSave);
+  server.on("/home", handleHome);
   server.begin();
 
   // Add service to MDNS
@@ -147,7 +205,8 @@ void setup() {
   hx711_1.begin(hx711_data_pin1, hx711_clock_pin1);
   hx711_2.begin(hx711_data_pin2, hx711_clock_pin2);
   dht.begin(); // start the temp sensor
-    // setup scales for oz
+
+  // setup scales for oz
   hx711_1.set_scale(scaleReset);
   hx711_2.set_scale(scaleReset);
   hx711_1.tare();
