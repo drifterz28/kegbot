@@ -2,8 +2,8 @@
 
 // Use the AVRISP mkII programer
 
-const char* ssid = "SSID";
-const char* password = "PASS";
+const char* ssid = "";
+const char* password = "admin";
 
 #include <ArduinoJson.h>
 #include "FS.h"
@@ -127,7 +127,7 @@ void setup() {
     Serial.println("MDNS responder started");
   }
   // keeps from sending ssid for connection
-  WiFi.softAP("KegBot", "nothingyoucanfindout");
+  WiFi.softAP("KegBot", password);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
@@ -135,7 +135,7 @@ void setup() {
   server.on("/", handleRoot);
   server.on("/home", []() {
     //send index.html
-    server.send(200, "text/html", "<html><body><ul id=\"data\"></ul><script>var connection = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);connection.onopen = function() {connection.send('Connect ' + new Date());};connection.onerror = function(error) {console.log('WebSocket Error ', error);};connection.onmessage = function(e) {console.log('Server: ', e.data);showData(e.data);};function showData(data) {data = JSON.parse(data);var dataElm = document.getElementById('data');console.log(dataElm);var list = '';for (var variable in data) {if (data.hasOwnProperty(variable)) {list += '<li>' + variable + ': ' + data[variable];}}dataElm.innerHTML = list;}</script></body></html>");
+    server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"assets/main.css\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"assets/main.js\"></script></body></html>");
   });
 
   server.begin();
