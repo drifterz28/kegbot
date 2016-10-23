@@ -25,12 +25,9 @@ button {
   text-align: center;
   white-space: nowrap;
   vertical-align: middle;
-  -ms-touch-action: manipulation;
   touch-action: manipulation;
   cursor: pointer;
   -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
   background-image: none;
   border: 1px solid transparent;
@@ -61,10 +58,6 @@ button {
   user-select: none;
 }
 
-.tempAndHumidity {
-  margin-top: 30px;
-}
-
 .tempAndHumidity small {
   font-size: 10px;
   display: block;
@@ -82,6 +75,40 @@ button {
   text-align: center;
   font-size: 30px;
   border-radius: 50%;
+  position: relative;
+}
+
+.temp::before {
+  content: "";
+  background-image: url(fan.svg?eee);
+  background-repeat: no-repeat;
+  background-position: 2.3px 1.3px;
+  background-size: 80%;
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  transform: rotate(0);
+}
+
+.temp.fanOn::before {
+  animation-duration: 3s;
+  animation-name: fan;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  transform-origin: center;
+}
+
+@keyframes fan {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .notConnected .temp,

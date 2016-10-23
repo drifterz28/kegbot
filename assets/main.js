@@ -53,11 +53,12 @@ const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
   );
 };
 
-const TempAndHumidity = ({temp, humidity, status}) => {
+const TempAndHumidity = ({temp, humidity, status, handleFan, fan}) => {
   const connection = status ? 'connected' : 'notConnected';
+  const fanStatus = fan ? 'fanOn' : '';
   return (
     <section className={`tempAndHumidity ${connection}`}>
-      <div className="temp">
+      <div onClick={handleFan} className={`temp ${fanStatus}`}>
         <small>Temp</small>
         {Math.round(temp)}
       </div>
@@ -147,6 +148,9 @@ const App = React.createClass({
     conn.onopen = () => {
       conn.send('Connect ' + new Date());
     };
+    conn.onclose = (close) => {
+      console.log(close);
+    };
     conn.onerror = (error) => {
       this.handleError(error);
     };
@@ -168,9 +172,7 @@ const App = React.createClass({
     if(this.state.fan == 0) {
       fanState = 1;
     }
-    console.log(fanState);
     conn.send(fanState);
-    this.setState({fan: fanState});
   },
   updateKegs(json) {
     const {kegOne, kegTwo} = json;
@@ -204,10 +206,9 @@ const App = React.createClass({
     return (
       <div className="app">
         <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={kegOneMaxValue} handleEdit={this.handleEdit}/>
-        <TempAndHumidity temp={temp} humidity={humidity} status={isConnected}/>
+        <TempAndHumidity temp={temp} humidity={humidity} status={isConnected} fan={this.state.fan} handleFan={this.handleFan}/>
         <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={kegTwoMaxValue} handleEdit={this.handleEdit}/>
         {modalOpen && <Modal {...this.state} handleSave={this.handleSave} modalClose={this.handleModalClose}/>}
-        <button onClick={this.handleFan}>Fan</button>
       </div>
     );
   }
