@@ -22,6 +22,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 // dht22 temp sensor
 #define DHTPIN 14
 #define DHTTYPE DHT22
+#define FAN_PIN 10
+int fanState = 0;
 DHT dht(DHTPIN, DHTTYPE);
 
 // setting up non blocking timing for temp update
@@ -65,7 +67,7 @@ String jsonOut() {
   float humidity = getHumidity();
   float kegOne = hx711_1.get_units(10);
   float kegTwo = hx711_2.get_units(10);
-  return "{\"temp\": " + String(temp) + ", \"humidity\": " + String(humidity) + ", \"kegOne\": " + String(kegOne) + ", \"kegTwo\": " + String(kegTwo) + "}";
+  return "{\"fan\": " + String(fanState) + ", \"temp\": " + String(temp) + ", \"humidity\": " + String(humidity) + ", \"kegOne\": " + String(kegOne) + ", \"kegTwo\": " + String(kegTwo) + "}";
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
@@ -81,6 +83,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
       }
       break;
     case WStype_TEXT:
+      uint8_t client = (uint32_t) strtol((const char *) &payload[0], NULL, 16);
+        if(client == 1) {
+          digitalWrite(FAN_PIN, HIGH);
+          fanState = 1;
+        } else if(client == 0) {
+          digitalWrite(FAN_PIN, LOW);
+          fanState = 0;
+        }
       Serial.printf("[%u] get Text: %s\n", num, payload);
       break;
   }
@@ -101,13 +111,8 @@ void handleRoot() {
   server.send(200, "application/json", jsonOut());
 }
 
-void handleSetup() {
-  Serial.println("setup");
-  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot Setup</title></head><body><form method=\"post\" action=\"/save\" style=\"margin: 0 auto;max-width:500px;width:100%;\"><h3>Wifi setup</h3><table><tr><td><label>SSID:</label></td><td><input name=\"ssid\"/></td></tr><tr><td><label>Password:</label></td><td><input name=\"password\"/></td></tr></table><button>Save</button></form></body></html>");
-}
-
 void handleHome() {
-  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"assets/main.css\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"assets/main.js\"></script></body></html>");
+  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://drifterz28.github.io/kegbot/assets/main.css\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"https://drifterz28.github.io/kegbot/assets/main.js\"></script></body></html>");
 }
 
 void setup() {
@@ -155,6 +160,8 @@ void setup() {
   hx711_1.tare();
   hx711_2.tare();
   Serial.println("done with setup");
+  pinMode(FAN_PIN, OUTPUT);
+  digitalWrite(FAN_PIN, LOW);
 }
 
 void loop() {

@@ -1,6 +1,10 @@
-const url = '192.168.0.108'; //location.hostname;
+//const url = '192.168.0.108'; // for local testing
+const url = location.hostname;
 const kegBotUrl = 'https://iot-ecommsolution.rhcloud.com/kegbot';
 const conn = new WebSocket(`ws://${url}:81/`, ['arduino']);
+
+// notes
+// 1 gallon = 8lbs = 128oz by weight
 
 const utils = {
   precentOfMax: (amount, maxAmount) => {
@@ -9,70 +13,50 @@ const utils = {
     }
     return (amount / maxAmount) * 100;
   },
-  updateName: (kegNumber, kegName) => {
-    return fetch(`${kegBotUrl}?keg=${kegNumber}&name=${kegName}`)
+  updateKeg: (kegInfo, callback) => {
+    const {gallons, kegNumber, maxValue, name} = kegInfo;
+    fetch(`${kegBotUrl}?keg=${kegNumber}&name=${name}&gallons=${gallons}&maxValue=${maxValue}`)
       .then(response => response.json())
-      .then(json => json);
+      .then(json => {
+        callback(json);
+      });
+  },
+  getKegInfo: (callback) => {
+    fetch(`${kegBotUrl}`)
+      .then(response => {
+        return response.json().then(json => {
+          callback(json);
+        });
+      });
   }
 };
 
-const Keg = React.createClass({
-  getInitialState() {
-    return {
-      isEdit: false,
-      kegName: this.props.name,
-    };
-  },
-  handleNameChange(e) {
-    this.setState({
-      isEdit: true
-    });
-  },
-  handleChange(e) {
-    this.setState({
-      kegName: e.target.value
-    });
-  },
-  handleSave(e) {
-    e.preventDefault();
-    this.setState({
-      isEdit: false
-    });
-    this.props.handleSave(this.state.kegName, this.props.kegNumber);
-  },
-  handleNewMaxValue() {
-    this.props.handleNewMaxValue(this.props.kegNumber);
-  },
-  render() {
-    const {value, maxValue} = this.props;
-    const {kegName} = this.state;
-    const max = (maxValue < value)? value : maxValue;
-    const precentage = Math.floor(utils.precentOfMax(value, max));
-    const styles = {
-      "transform": 'translateY(-' + precentage + '%)'
-    };
-    return (
-      <section className="kegWrapper">
-        {!this.state.isEdit ?
-          <h1 onDoubleClick={this.handleNameChange} className="brewName">{kegName}</h1> :
-          <form className="nameChange" onSubmit={this.handleSave}>
-            <input onChange={this.handleChange} defaultValue={kegName}/>
-          </form>
-        }
-        <div className="kegGraph">
-          <div className="keg" onDoubleClick={this.handleNewMaxValue}>
-            {precentage}%
-          </div>
-          <div className="progress" style={styles}></div>
-        </div>
-      </section>
-    );
-  }
-});
-
-const TempAndHumidity = function({temp, humidity}) {
+const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
+  const max = (maxValue < value)? value : maxValue;
+  const precentage = Math.floor(utils.precentOfMax(value, max));
+  const styles = {
+    "transform": 'translateY(-' + precentage + '%)'
+  };
+  const edit = () => {
+    handleEdit(kegNumber);
+  };
   return (
-    <section className="tempAndHumidity">
+    <section className="kegWrapper">
+      <h1 onDoubleClick={edit} className="brewName">{name}</h1>
+      <div className="kegGraph">
+        <div className="keg">
+          {precentage}%
+        </div>
+        <div className="progress" style={styles}></div>
+      </div>
+    </section>
+  );
+};
+
+const TempAndHumidity = ({temp, humidity, status}) => {
+  const connection = status ? 'connected' : 'notConnected';
+  return (
+    <section className={`tempAndHumidity ${connection}`}>
       <div className="temp">
         <small>Temp</small>
         {Math.round(temp)}
@@ -85,21 +69,79 @@ const TempAndHumidity = function({temp, humidity}) {
   );
 };
 
+const Modal = React.createClass({
+  getInitialState() {
+    const kegNumber = this.props.kegEdit === 1 ? 'kegOne' : 'kegTwo';
+    return {
+      kegNumber: kegNumber,
+      name: this.props[`${kegNumber}Name`],
+      maxValue: this.props[`${kegNumber}MaxValue`],
+      gallons: this.props[`${kegNumber}Gallons`]
+    }
+  },
+  handleSetMax() {
+    this.setState({
+      maxValue: this.props[`${this.state.kegNumber}`]
+    });
+  },
+  handleChange(e) {
+    const target = e.target;
+    let newState = {};
+    newState[target.name] = target.value;
+    this.setState(newState);
+  },
+  handleSave(e) {
+    e.preventDefault();
+    this.props.handleSave(this.state);
+  },
+  render() {
+    return (
+      <div className="modal">
+        <div className="modalContent">
+          <button onClick={this.props.modalClose} className="close">x</button>
+          <form onSubmit={this.handleSave} className="kegForm">
+            <h1>Edit {this.state.kegNumber}</h1>
+            <label>
+              Name: <input value={this.state.name} name="name" onChange={this.handleChange}/>
+            </label>
+            <label>
+              Max Value:
+              <button type="button" className="setMaxBtn" onClick={this.handleSetMax}>Set Max</button>
+              <input className="setMax" value={this.state.maxValue} name="maxValue" onChange={this.handleChange}/>
+            </label>
+            <label>
+              Gallons: <input type="number" value={this.state.gallons} name="gallons" onChange={this.handleChange}/>
+            </label>
+            <button>Save</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+});
+
 const App = React.createClass({
   getInitialState() {
     return {
+      isConnected: false,
+      modalOpen: false,
+      kegEdit: null,
+      fan: 0,
       temp: 0,
       humidity: 0,
       kegOne: 0,
       kegTwo: 0,
-      kegOneName: 'dbl click to add name',
-      kegTwoName: 'dbl click to add name',
+      kegOneName: '',
+      kegTwoName: '',
       kegOneMaxValue: 0,
-      kegTwoMaxValue: 0
+      kegTwoMaxValue: 0,
+      kegOneGallons: 0,
+      kegTwoGallons: 0
     };
   },
   handleError(err) {
     console.log('Error ', error);
+    this.setState({isConnected: false});
   },
   componentWillMount() {
     conn.onopen = () => {
@@ -111,28 +153,61 @@ const App = React.createClass({
     conn.onmessage = (e) => {
       this.handleUpdate(e.data);
     };
+    utils.getKegInfo(this.updateKegs);
   },
   handleUpdate(data) {
-    const json = JSON.parse(data);
-    console.log(json)
-    this.setState(json);
+    if(data === 'Connected') {
+      this.setState({isConnected: true});
+    } else {
+      const json = JSON.parse(data);
+      this.setState(json);
+    }
   },
-  handleSave(value, number) {
-    const kegNumber = (number === 1) ? 'kegOne' : 'kegTwo';
-    const newState = utils.updateName(kegNumber, value);
-    console.log(newState)
-    this.setState(newState);
+  handleFan() {
+    let fanState = 0;
+    if(this.state.fan == 0) {
+      fanState = 1;
+    }
+    console.log(fanState);
+    conn.send(fanState);
+    this.setState({fan: fanState});
   },
-  handleNewMaxValue(kegNumber) {
-    console.log(kegNumber);
+  updateKegs(json) {
+    const {kegOne, kegTwo} = json;
+    this.setState({
+      kegOneName: kegOne.name,
+      kegTwoName: kegTwo.name,
+      kegOneMaxValue: kegOne.maxValue,
+      kegTwoMaxValue: kegTwo.maxValue,
+      kegOneGallons: kegOne.gallons,
+      kegTwoGallons: kegTwo.gallons,
+      modalOpen: false
+    });
+  },
+  handleSave(kegInfo) {
+    utils.updateKeg(kegInfo, this.updateKegs);
+  },
+  handleEdit(kegNumber) {
+    this.setState({
+      modalOpen: true,
+      kegEdit: kegNumber
+    });
+  },
+  handleModalClose() {
+    this.setState({
+      modalOpen: false
+    });
   },
   render() {
-    const {temp, humidity, kegOne, kegTwo, kegOneName, kegTwoName, kegOneMaxValue, kegTwoMaxValue} = this.state;
+    const {temp, humidity, kegOne, kegTwo, kegOneName, kegTwoName, kegOneMaxValue, kegTwoMaxValue, isConnected, modalOpen} = this.state;
+
     return (
       <div className="app">
-        <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={kegOneMaxValue} handleSave={this.handleSave} handleNewMaxValue={this.handleNewMaxValue}/>
-        <TempAndHumidity temp={temp} humidity={humidity}/>
-        <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={kegTwoMaxValue} handleSave={this.handleSave} handleNewMaxValue={this.handleNewMaxValue}/>
+        <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={kegOneMaxValue} handleEdit={this.handleEdit}/>
+        <TempAndHumidity temp={temp} humidity={humidity} status={isConnected}/>
+        <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={kegTwoMaxValue} handleEdit={this.handleEdit}/>
+        {modalOpen && <Modal {...this.state} handleSave={this.handleSave} modalClose={this.handleModalClose}/>}
+        <button onClick={this.handleFan}>Fan</button>
       </div>
     );
   }

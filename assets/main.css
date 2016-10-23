@@ -15,6 +15,31 @@ body {
   background-size: cover;
 }
 
+button {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #fff;
+  background-color: #5cb85c;
+  border-color: #4cae4c;
+}
+
 .app {
   display: flex;
   flex-wrap: nowrap;
@@ -31,6 +56,9 @@ body {
   text-align: center;
   font-size: 30px;
   margin: 10px;
+  min-height: 35px;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tempAndHumidity {
@@ -55,6 +83,12 @@ body {
   font-size: 30px;
   border-radius: 50%;
 }
+
+.notConnected .temp,
+.notConnected .humidity {
+  color: #ff0000;
+}
+
 .temp::after {
   content: "°";
 }
@@ -100,4 +134,66 @@ body {
   position: relative;
   transition: all .2s ease;
   transform: translateY(-100%);
+}
+
+.modal {
+  background: rgba(0,0,0,.4);
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 2;
+}
+
+.close {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+}
+
+.modalContent {
+  background: #fff;
+  color: #000;
+  height: 90%;
+  margin: 30px auto;
+  position: relative;
+  padding: 20px;
+  width: 300px;
+  border-radius: 4px;
+}
+
+.kegForm h1 {
+  text-align: center;
+  margin: 0 0 10px 0;
+}
+
+.kegForm label {
+  width: 100%;
+  display: block;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.kegForm button {
+  width: 50%;
+  margin: 0 auto;
+  display: block;
+}
+
+.kegForm input {
+  float: right;
+  width: 65%;
+  font-size: 16px;
+}
+
+.kegForm .setMax {
+  width: 36%;
+}
+
+.kegForm .setMaxBtn {
+  float: right;
+  width: 65px;
+  margin-left: 10px;
+  padding: 1px 4px;
 }
