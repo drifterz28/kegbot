@@ -28,7 +28,20 @@ const utils = {
           callback(json);
         });
       });
+  },
+  launchIntoFullscreen: () => {
+    const element = document.body;
+    if(element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if(element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if(element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen();
+    } else if(element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
   }
+
 };
 
 const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
@@ -158,6 +171,7 @@ const App = React.createClass({
       this.handleUpdate(e.data);
     };
     utils.getKegInfo(this.updateKegs);
+    utils.launchIntoFullscreen();
   },
   handleUpdate(data) {
     if(data === 'Connected') {
