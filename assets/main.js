@@ -1,5 +1,5 @@
-//const url = '192.168.0.108'; // for local testing
-const url = location.hostname;
+const url = '192.168.0.108'; // for local testing
+//const url = location.hostname;
 const kegBotUrl = 'https://iot-ecommsolution.rhcloud.com/kegbot';
 const conn = new WebSocket(`ws://${url}:81/`, ['arduino']);
 
@@ -30,15 +30,11 @@ const utils = {
       });
   },
   launchIntoFullscreen: () => {
-    const element = document.body;
+    const element = document.documentElement;
     if(element.requestFullscreen) {
       element.requestFullscreen();
-    } else if(element.mozRequestFullScreen) {
-      element.mozRequestFullScreen();
     } else if(element.webkitRequestFullscreen) {
       element.webkitRequestFullscreen();
-    } else if(element.msRequestFullscreen) {
-      element.msRequestFullscreen();
     }
   }
 
@@ -66,7 +62,7 @@ const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
   );
 };
 
-const TempAndHumidity = ({temp, humidity, status, handleFan, fan}) => {
+const TempAndHumidity = ({temp, humidity, status, handleFan, fan, handleFullScreen}) => {
   const connection = status ? 'connected' : 'notConnected';
   const fanStatus = fan ? 'fanOn' : '';
   return (
@@ -75,7 +71,7 @@ const TempAndHumidity = ({temp, humidity, status, handleFan, fan}) => {
         <small>Temp</small>
         {Math.round(temp)}
       </div>
-      <div className="humidity">
+      <div onClick={handleFullScreen} className="humidity">
         <small>Humidity</small>
         {Math.round(humidity)}
       </div>
@@ -171,7 +167,6 @@ const App = React.createClass({
       this.handleUpdate(e.data);
     };
     utils.getKegInfo(this.updateKegs);
-    utils.launchIntoFullscreen();
   },
   handleUpdate(data) {
     if(data === 'Connected') {
@@ -187,6 +182,10 @@ const App = React.createClass({
       fanState = 1;
     }
     conn.send(fanState);
+  },
+  handleFullScreen() {
+    console.log('fullscreen')
+    utils.launchIntoFullscreen();
   },
   updateKegs(json) {
     const {kegOne, kegTwo} = json;
@@ -220,7 +219,14 @@ const App = React.createClass({
     return (
       <div className="app">
         <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={kegOneMaxValue} handleEdit={this.handleEdit}/>
-        <TempAndHumidity temp={temp} humidity={humidity} status={isConnected} fan={this.state.fan} handleFan={this.handleFan}/>
+        <TempAndHumidity
+          temp={temp}
+          humidity={humidity}
+          status={isConnected}
+          fan={this.state.fan}
+          handleFullScreen={this.handleFullScreen}
+          handleFan={this.handleFan}
+        />
         <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={kegTwoMaxValue} handleEdit={this.handleEdit}/>
         {modalOpen && <Modal {...this.state} handleSave={this.handleSave} modalClose={this.handleModalClose}/>}
       </div>
