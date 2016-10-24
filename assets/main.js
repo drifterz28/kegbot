@@ -42,7 +42,7 @@ const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
   };
   return (
     <section className="kegWrapper">
-      <h1 onDoubleClick={edit} className="brewName">{name}</h1>
+      <h1 onClick={edit} className="brewName">{name}</h1>
       <div className="kegGraph">
         <div className="keg">
           {precentage}%
