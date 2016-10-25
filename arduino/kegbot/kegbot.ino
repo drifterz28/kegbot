@@ -8,8 +8,8 @@
 #include "HX711.h"
 #include "DHT.h"
 
-const char* ssid = "Goldstar";
-const char* password = "altadena";
+const char* ssid = "";
+const char* password = "";
 
 ESP8266WiFiMulti WiFiMulti;
 
