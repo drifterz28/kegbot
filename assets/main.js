@@ -1,5 +1,5 @@
-const url = '192.168.0.108'; // for local testing
-//const url = location.hostname;
+//const url = '192.168.0.108'; // for local testing
+const url = location.hostname;
 const kegBotUrl = 'https://iot-ecommsolution.rhcloud.com/kegbot';
 const conn = new WebSocket(`ws://${url}:81/`, ['arduino']);
 

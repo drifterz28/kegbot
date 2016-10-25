@@ -5,14 +5,11 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
-#include <ArduinoJson.h>
-#include "FS.h"
-
 #include "HX711.h"
 #include "DHT.h"
 
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "Goldstar";
+const char* password = "altadena";
 
 ESP8266WiFiMulti WiFiMulti;
 
