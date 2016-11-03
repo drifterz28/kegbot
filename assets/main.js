@@ -5,7 +5,9 @@ const conn = new WebSocket(`ws://${url}:81/`, ['arduino']);
 
 // notes
 // 1 gallon = 8lbs = 128oz by weight
-
+// empty keg ~165 Oz
+// full keg ~928
+// 5 gallons ~640
 const utils = {
   precentOfMax: (amount, maxAmount) => {
     if(amount === 0 && maxAmount === 0) {
@@ -149,7 +151,7 @@ const App = React.createClass({
       kegTwoGallons: 0
     };
   },
-  handleError(err) {
+  handleError(error) {
     console.log('Error ', error);
     this.setState({isConnected: false});
   },
@@ -184,8 +186,13 @@ const App = React.createClass({
     conn.send(fanState);
   },
   handleFullScreen() {
-    console.log('fullscreen')
+    console.log('fullscreen');
     utils.launchIntoFullscreen();
+  },
+  kegMaxValue(max, gallons) {
+    const onces = gallons * 128;
+    const weightOfKeg = onces - max;
+    return max - weightOfKeg;
   },
   updateKegs(json) {
     const {kegOne, kegTwo} = json;
@@ -214,11 +221,25 @@ const App = React.createClass({
     });
   },
   render() {
-    const {temp, humidity, kegOne, kegTwo, kegOneName, kegTwoName, kegOneMaxValue, kegTwoMaxValue, isConnected, modalOpen} = this.state;
-
+    const {
+      temp,
+      humidity,
+      kegOne,
+      kegTwo,
+      kegOneName,
+      kegTwoName,
+      kegOneMaxValue,
+      kegTwoMaxValue,
+      isConnected,
+      modalOpen,
+      kegOneGallons,
+      kegTwoGallons
+    } = this.state;
+    const newKegOneMax = this.kegMaxValue(kegOneMaxValue, kegOneGallons);
+    const newKegTwoMax = this.kegMaxValue(kegTwoMaxValue, kegTwoGallons);
     return (
       <div className="app">
-        <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={kegOneMaxValue} handleEdit={this.handleEdit}/>
+        <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={newKegOneMax} handleEdit={this.handleEdit}/>
         <TempAndHumidity
           temp={temp}
           humidity={humidity}
@@ -227,7 +248,7 @@ const App = React.createClass({
           handleFullScreen={this.handleFullScreen}
           handleFan={this.handleFan}
         />
-        <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={kegTwoMaxValue} handleEdit={this.handleEdit}/>
+        <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={newKegTwoMax} handleEdit={this.handleEdit}/>
         {modalOpen && <Modal {...this.state} handleSave={this.handleSave} modalClose={this.handleModalClose}/>}
       </div>
     );

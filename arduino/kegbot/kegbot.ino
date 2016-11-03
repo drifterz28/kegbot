@@ -3,6 +3,7 @@
 #include <ESP8266WiFiMulti.h>
 #include <WebSocketsServer.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266HTTPClient.h>
 #include <ESP8266mDNS.h>
 
 #include "HX711.h"
@@ -11,8 +12,9 @@
 const char* ssid = "";
 const char* password = "";
 
-ESP8266WiFiMulti WiFiMulti;
+String serverUrl = "https://iot-ecommsolution.rhcloud.com/kegbot";
 
+ESP8266WiFiMulti WiFiMulti;
 ESP8266WebServer server = ESP8266WebServer(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
@@ -23,9 +25,13 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 int fanState = 0;
 DHT dht(DHTPIN, DHTTYPE);
 
-// setting up non blocking timing for temp update
+// setting up non blocking timing for WS update
 unsigned long previousMillis = 0;
 const long interval = 1000;
+
+// setting up non blocking timing for server update
+unsigned long serverPreviousMillis = 0;
+const long serverInterval = 1000 * 60 * 10;
 
 // set up scales to pins
 float scaleReset = -646.38;
@@ -67,6 +73,28 @@ String jsonOut() {
   return "{\"fan\": " + String(fanState) + ", \"temp\": " + String(temp) + ", \"humidity\": " + String(humidity) + ", \"kegOne\": " + String(kegOne) + ", \"kegTwo\": " + String(kegTwo) + "}";
 }
 
+void pushServerData() {
+  unsigned long currentMillis = millis();
+  if(currentMillis - serverPreviousMillis >= serverInterval) {
+    serverPreviousMillis = currentMillis;
+    String json = jsonOut();
+    if ((WiFiMulti.run() == WL_CONNECTED)) {
+      String fullUrl = serverUrl + "?json=" + json;
+      Serial.print("Send to server: ");
+      Serial.println(fullUrl);
+      HTTPClient http;
+      http.begin(fullUrl);
+      int httpCode = http.GET();
+      if (httpCode != -1) {
+        Serial.println("data sent to server");
+      } else {
+        Serial.println("fail");
+        Serial.println(httpCode);
+      }
+    }
+  }
+}
+
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
   switch (type) {
     case WStype_DISCONNECTED:
@@ -99,6 +127,16 @@ void pushData() {
     previousMillis = currentMillis;
     String json = jsonOut();
     webSocket.broadcastTXT(json);
+  }
+}
+
+void handleScaleReset() {
+  // server.arg("") get args
+  if(server.hasArg("kegOne")) {
+    hx711_1.tare();
+  }
+  if(server.hasArg("kegTwo")) {
+    hx711_2.tare();
   }
 }
 
@@ -140,6 +178,7 @@ void setup() {
   // handle routes
   server.on("/", handleRoot);
   server.on("/home", handleHome);
+  server.on("/scales", handleScaleReset);
   server.begin();
 
   // Add service to MDNS
@@ -165,4 +204,5 @@ void loop() {
   webSocket.loop();
   server.handleClient();
   pushData();
+  pushServerData();
 }
