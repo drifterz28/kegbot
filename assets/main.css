@@ -94,7 +94,7 @@ button {
 
 .temp::before {
   content: "";
-  background-image: url(fan.svg?eee);
+  background-image: url(fan.svg);
   background-repeat: no-repeat;
   background-position: 2.3px 1.3px;
   background-size: 80%;

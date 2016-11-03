@@ -1,5 +1,5 @@
-//const url = '192.168.0.108'; // for local testing
-const url = location.hostname;
+const url = '192.168.1.223'; // for local testing
+//const url = location.hostname;
 const kegBotUrl = 'https://iot-ecommsolution.rhcloud.com/kegbot';
 const conn = new WebSocket(`ws://${url}:81/`, ['arduino']);
 
@@ -44,7 +44,8 @@ const utils = {
 
 const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
   const max = (maxValue < value)? value : maxValue;
-  const precentage = Math.floor(utils.precentOfMax(value, max));
+  let precentage = Math.floor(utils.precentOfMax(value, max));
+  precentage = precentage <= 1 ? 0 : precentage;
   const styles = {
     "transform": 'translateY(-' + precentage + '%)'
   };
@@ -189,10 +190,10 @@ const App = React.createClass({
     console.log('fullscreen');
     utils.launchIntoFullscreen();
   },
-  kegMaxValue(max, gallons) {
+  getKegWeight(max, gallons) {
     const onces = gallons * 128;
-    const weightOfKeg = onces - max;
-    return max - weightOfKeg;
+    const weightOfKeg = max - onces;
+    return weightOfKeg;
   },
   updateKegs(json) {
     const {kegOne, kegTwo} = json;
@@ -235,11 +236,15 @@ const App = React.createClass({
       kegOneGallons,
       kegTwoGallons
     } = this.state;
-    const newKegOneMax = this.kegMaxValue(kegOneMaxValue, kegOneGallons);
-    const newKegTwoMax = this.kegMaxValue(kegTwoMaxValue, kegTwoGallons);
+    const weightOfKegOne = this.getKegWeight(kegOneMaxValue, kegOneGallons);
+    const weightOfKegTwo = this.getKegWeight(kegTwoMaxValue, kegTwoGallons);
+    const kegOneWeight = kegOne - weightOfKegOne;
+    const kegTwoWeight = kegTwo - weightOfKegTwo;
+    const kegOneMaxWeight = kegOneMaxValue - weightOfKegOne;
+    const kegTwoMaxWeight = kegTwoMaxValue - weightOfKegTwo;
     return (
       <div className="app">
-        <Keg name={kegOneName} value={kegOne} kegNumber={1} maxValue={newKegOneMax} handleEdit={this.handleEdit}/>
+        <Keg name={kegOneName} value={kegOneWeight} kegNumber={1} maxValue={kegOneMaxWeight} handleEdit={this.handleEdit}/>
         <TempAndHumidity
           temp={temp}
           humidity={humidity}
@@ -248,7 +253,7 @@ const App = React.createClass({
           handleFullScreen={this.handleFullScreen}
           handleFan={this.handleFan}
         />
-        <Keg name={kegTwoName} value={kegTwo} kegNumber={2} maxValue={newKegTwoMax} handleEdit={this.handleEdit}/>
+        <Keg name={kegTwoName} value={kegTwoWeight} kegNumber={2} maxValue={kegTwoMaxWeight} handleEdit={this.handleEdit}/>
         {modalOpen && <Modal {...this.state} handleSave={this.handleSave} modalClose={this.handleModalClose}/>}
       </div>
     );
