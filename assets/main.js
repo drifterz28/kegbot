@@ -32,7 +32,7 @@ const utils = {
       });
   },
   setFanState: () => {
-    fetch(`${url}/settings?fan`)
+    fetch(`${url}/settings?fan=1`)
       .then(response => {
         return response.json().then(json => {
           callback(json);
@@ -179,11 +179,9 @@ const App = React.createClass({
     utils.getKegInfo(this.updateKegs);
   },
   handleUpdate(data) {
-    const json = JSON.parse(data);
-    this.setState({
-      ...json,
-      isConnected: true
-    });
+    let json = JSON.parse(data);
+    json.isConnected = true;
+    this.setState(json);
   },
   handleFan() {
     utils.setFanState();

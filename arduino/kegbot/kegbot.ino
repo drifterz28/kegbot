@@ -134,11 +134,12 @@ void handleScaleSettings() {
     }
   }
   if(server.hasArg("fan")) {
-    if(fanState) {
+    if(fanState == 1) {
       fanState = 0;
     } else {
       fanState = 1;
     }
+    Serial.println(fanState);
   }
   server.send(200, "application/json", jsonOut());
 }
@@ -150,7 +151,8 @@ void handleRoot() {
 }
 
 void handleHome() {
-  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://drifterz28.github.io/kegbot/assets/main.css\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"https://drifterz28.github.io/kegbot/assets/main.js\"></script></body></html>");
+  String currentMillis = String(millis());
+  server.send(200, "text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>KegBot</title><meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width\"><link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://drifterz28.github.io/kegbot/assets/main.css?" + currentMillis + "\"/><script src=\"https://unpkg.com/react@15.3.1/dist/react.js\"></script><script src=\"https://unpkg.com/react-dom@15.3.1/dist/react-dom.js\"></script><script src=\"https://unpkg.com/babel-core@5.8.38/browser.min.js\"></script></head><body><div class=\"container\"></div><script type=\"text/babel\" src=\"https://drifterz28.github.io/kegbot/assets/main.js?" + currentMillis + "\"></script></body></html>");
 }
 
 void setup() {
