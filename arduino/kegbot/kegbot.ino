@@ -140,6 +140,7 @@ void handleScaleSettings() {
       fanState = 1;
     }
   }
+  server.send(200, "application/json", jsonOut());
 }
 
 void handleRoot() {
