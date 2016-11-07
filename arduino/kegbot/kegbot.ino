@@ -31,7 +31,7 @@ const long interval = 1000;
 
 // setting up non blocking timing for server update
 unsigned long serverPreviousMillis = 0;
-const long serverInterval = 1000 * 60 * 10;
+const long serverInterval = 1000 * 60 * 5;
 
 // set up scales to pins
 float scaleReset = -646.38;
@@ -104,18 +104,11 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
         // send message to client
-        webSocket.sendTXT(num, "Connected");
+        String json = jsonOut();
+        webSocket.sendTXT(num, json);
       }
       break;
     case WStype_TEXT:
-      uint8_t client = (uint32_t) strtol((const char *) &payload[0], NULL, 16);
-        if(client == 1) {
-          digitalWrite(FAN_PIN, HIGH);
-          fanState = 1;
-        } else if(client == 0) {
-          digitalWrite(FAN_PIN, LOW);
-          fanState = 0;
-        }
       Serial.printf("[%u] get Text: %s\n", num, payload);
       break;
   }
@@ -130,13 +123,22 @@ void pushData() {
   }
 }
 
-void handleScaleReset() {
+void handleScaleSettings() {
   // server.arg("") get args
-  if(server.hasArg("kegOne")) {
-    hx711_1.tare();
+  if(server.hasArg("reset")) {
+    if(server.arg("reset") == "kegOne") {
+      hx711_1.tare();
+    }
+    if(server.arg("reset") == "kegTwo") {
+      hx711_2.tare();
+    }
   }
-  if(server.hasArg("kegTwo")) {
-    hx711_2.tare();
+  if(server.hasArg("fan")) {
+    if(fanState) {
+      fanState = 0;
+    } else {
+      fanState = 1;
+    }
   }
 }
 
@@ -178,7 +180,7 @@ void setup() {
   // handle routes
   server.on("/", handleRoot);
   server.on("/home", handleHome);
-  server.on("/scales", handleScaleReset);
+  server.on("/settings", handleScaleSettings);
   server.begin();
 
   // Add service to MDNS

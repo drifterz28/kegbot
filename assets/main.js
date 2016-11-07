@@ -27,6 +27,14 @@ const utils = {
     fetch(`${kegBotUrl}`)
       .then(response => {
         return response.json().then(json => {
+          console.log('fan state updated');
+        });
+      });
+  },
+  setFanState: () => {
+    fetch(`${url}/settings?fan`)
+      .then(response => {
+        return response.json().then(json => {
           callback(json);
         });
       });
@@ -39,7 +47,6 @@ const utils = {
       element.webkitRequestFullscreen();
     }
   }
-
 };
 
 const Keg = ({value, maxValue, name, kegNumber, handleEdit}) => {
@@ -172,19 +179,14 @@ const App = React.createClass({
     utils.getKegInfo(this.updateKegs);
   },
   handleUpdate(data) {
-    if(data === 'Connected') {
-      this.setState({isConnected: true});
-    } else {
-      const json = JSON.parse(data);
-      this.setState(json);
-    }
+    const json = JSON.parse(data);
+    this.setState({
+      ...json,
+      isConnected: true
+    });
   },
   handleFan() {
-    let fanState = 0;
-    if(this.state.fan == 0) {
-      fanState = 1;
-    }
-    conn.send(fanState);
+    utils.setFanState();
   },
   handleFullScreen() {
     console.log('fullscreen');
