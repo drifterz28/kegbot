@@ -1,5 +1,5 @@
-const url = '192.168.1.223'; // for local testing
-//const url = location.hostname;
+//const url = '192.168.1.223'; // for local testing
+const url = location.hostname;
 const kegBotUrl = 'https://iot-ecommsolution.rhcloud.com/kegbot';
 const conn = new WebSocket(`ws://${url}:81/`, ['arduino']);
 
@@ -27,16 +27,14 @@ const utils = {
     fetch(`${kegBotUrl}`)
       .then(response => {
         return response.json().then(json => {
-          console.log('fan state updated');
+          callback(json);
         });
       });
   },
   setFanState: () => {
     fetch(`${url}/settings?fan=1`)
       .then(response => {
-        return response.json().then(json => {
-          callback(json);
-        });
+        console.log('fan state updated');
       });
   },
   launchIntoFullscreen: () => {
@@ -197,6 +195,7 @@ const App = React.createClass({
   },
   updateKegs(json) {
     const {kegOne, kegTwo} = json;
+    console.log(json)
     this.setState({
       kegOneName: kegOne.name,
       kegTwoName: kegTwo.name,
@@ -236,6 +235,7 @@ const App = React.createClass({
       kegOneGallons,
       kegTwoGallons
     } = this.state;
+
     const weightOfKegOne = this.getKegWeight(kegOneMaxValue, kegOneGallons);
     const weightOfKegTwo = this.getKegWeight(kegTwoMaxValue, kegTwoGallons);
     const kegOneWeight = kegOne - weightOfKegOne;
