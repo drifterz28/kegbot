@@ -32,7 +32,7 @@ const utils = {
       });
   },
   setFanState: () => {
-    fetch(`${url}/settings?fan=1`)
+    fetch(`http://${url}/settings?fan=1`)
       .then(response => {
         console.log('fan state updated');
       });
