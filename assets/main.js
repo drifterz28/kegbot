@@ -167,6 +167,7 @@ const App = React.createClass({
     };
     conn.onclose = (close) => {
       console.log(close);
+      this.setState({isConnected: false});
     };
     conn.onerror = (error) => {
       this.handleError(error);

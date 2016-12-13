@@ -12,7 +12,13 @@
 const char* ssid = "";
 const char* password = "";
 
-String serverUrl = "https://iot-ecommsolution.rhcloud.com/kegbot";
+String serverUrl = "http://iot-ecommsolution.rhcloud.com/kegbot";
+
+int fanState = 0;
+float temp;
+float humidity;
+float kegOne;
+float kegTwo;
 
 ESP8266WiFiMulti WiFiMulti;
 ESP8266WebServer server = ESP8266WebServer(80);
@@ -22,7 +28,7 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 #define DHTPIN 14
 #define DHTTYPE DHT22
 #define FAN_PIN 10
-int fanState = 0;
+
 DHT dht(DHTPIN, DHTTYPE);
 
 // setting up non blocking timing for WS update
@@ -30,8 +36,8 @@ unsigned long previousMillis = 0;
 const long interval = 1000;
 
 // setting up non blocking timing for server update
-unsigned long serverPreviousMillis = 0;
-const long serverInterval = 1000 * 60 * 5;
+unsigned long serverPreviousMillis = -100000;
+const long serverInterval = 1000 * 60 * 1;
 
 // set up scales to pins
 float scaleReset = -646.38;
@@ -65,32 +71,37 @@ float getTemp() {
   return temp_f;
 }
 
+void updateValues() {
+  temp = getTemp();
+  humidity = getHumidity();
+  kegOne = hx711_1.get_units(10);
+  kegTwo = hx711_2.get_units(10);
+}
+
 String jsonOut() {
-  float temp = getTemp();
-  float humidity = getHumidity();
-  float kegOne = hx711_1.get_units(10);
-  float kegTwo = hx711_2.get_units(10);
-  return "{\"fan\": " + String(fanState) + ", \"temp\": " + String(temp) + ", \"humidity\": " + String(humidity) + ", \"kegOne\": " + String(kegOne) + ", \"kegTwo\": " + String(kegTwo) + "}";
+  updateValues();
+  return "{\"fan\":" + String(fanState) + ",\"temp\":" + String(temp) + ",\"humidity\":" + String(humidity) + ",\"kegOne\":" + String(kegOne) + ",\"kegTwo\":" + String(kegTwo) + "}";
 }
 
 void pushServerData() {
   unsigned long currentMillis = millis();
   if(currentMillis - serverPreviousMillis >= serverInterval) {
     serverPreviousMillis = currentMillis;
-    String json = jsonOut();
+    String urlArgs = "?json=" + jsonOut();
     if ((WiFiMulti.run() == WL_CONNECTED)) {
-      String fullUrl = serverUrl + "?json=" + json;
+      String fullUrl = serverUrl + urlArgs;
       Serial.print("Send to server: ");
       Serial.println(fullUrl);
       HTTPClient http;
       http.begin(fullUrl);
       int httpCode = http.GET();
-      if (httpCode != -1) {
+      if (httpCode > 0) {
         Serial.println("data sent to server");
       } else {
         Serial.println("fail");
         Serial.println(httpCode);
       }
+      http.end();
     }
   }
 }
@@ -128,17 +139,22 @@ void handleScaleSettings() {
   if(server.hasArg("reset")) {
     if(server.arg("reset") == "kegOne") {
       hx711_1.tare();
+      Serial.println("kegOne tare");
     }
     if(server.arg("reset") == "kegTwo") {
       hx711_2.tare();
+      Serial.println("kegTwo tare");
     }
   }
   if(server.hasArg("fan")) {
+    
     if(fanState == 1) {
       fanState = 0;
     } else {
       fanState = 1;
     }
+    digitalWrite(FAN_PIN, fanState);
+    Serial.print("fan=");
     Serial.println(fanState);
   }
   server.send(200, "application/json", jsonOut());
